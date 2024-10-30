@@ -39,8 +39,13 @@ BEGIN
 
   SET v_tahun = DATE_FORMAT(NOW(), '%y');
 
-  SET v_no_urut = LPAD((SELECT COUNT(*) + 1 FROM m_karyawan WHERE LEFT(nik, 2) = v_kode_divisi), 4, '0');
-
+  SELECT LPAD(
+    COALESCE(MAX(CAST(SUBSTRING(nik, 5, 4) AS UNSIGNED)) + 1, 1),
+    4, '0'
+  ) INTO v_no_urut
+  FROM m_karyawan
+  WHERE LEFT(nik, 2) = v_kode_divisi;
+  
   SET v_nik = CONCAT(v_kode_divisi, v_tahun, v_no_urut);
 
   INSERT INTO m_karyawan (nik, nama, alamat, tgllahir, divisi, status, created_date)
@@ -57,8 +62,31 @@ CREATE PROCEDURE EditKaryawan (
   IN p_status VARCHAR(20)
 )
 BEGIN
+DECLARE v_nik VARCHAR(8);
+  DECLARE v_kode_divisi VARCHAR(2);
+  DECLARE v_tahun VARCHAR(2);
+  DECLARE v_no_urut VARCHAR(4);
+
+  IF p_divisi = 'IT' THEN
+    SET v_kode_divisi = '10';
+  ELSEIF p_divisi = 'HRD' THEN
+    SET v_kode_divisi = '11';
+  ELSEIF p_divisi = 'FINANCE' THEN
+    SET v_kode_divisi = '12';
+  END IF;
+
+  SET v_tahun = DATE_FORMAT(NOW(), '%y');
+
+  SELECT LPAD(
+    COALESCE(MAX(CAST(SUBSTRING(nik, 5, 4) AS UNSIGNED)) + 1, 1),
+    4, '0'
+  ) INTO v_no_urut
+  FROM m_karyawan
+  WHERE LEFT(nik, 2) = v_kode_divisi;
+  
+  SET v_nik = CONCAT(v_kode_divisi, v_tahun, v_no_urut);
   UPDATE m_karyawan
-  SET nama = p_nama, alamat = p_alamat, tgllahir = p_tgllahir, divisi = p_divisi, status = p_status
+  SET nik = v_nik, nama = p_nama, alamat = p_alamat, tgllahir = p_tgllahir, divisi = p_divisi, status = p_status
   WHERE nik = p_nik;
 END //
 
